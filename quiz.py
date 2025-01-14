@@ -58,6 +58,13 @@ def write_high_score(score):
     with open("highscore.txt", "w") as file:
         file.write(str(score))
 
+# Function to calculate the score based on time and correctness
+def calculate_score(correct, time_taken, max_time):
+    if not correct:
+        return -1  # Penalize incorrect answers
+    time_bonus = max(0, (max_time - time_taken) * 10)  # Reward faster responses
+    return 10 + int(time_bonus)  # Base score of 10 plus time bonus
+
 # Main function to run the quiz
 def run_quiz():
     from colorama import init
@@ -69,41 +76,46 @@ def run_quiz():
     high_score = read_high_score()
     print(Fore.MAGENTA + f"Current High Score: {high_score}" + Style.RESET_ALL)
 
-    score = 0
+    total_score = 0
     total_questions = 5
+    max_time = 10
 
     for i in range(total_questions):
         print(Fore.BLUE + f"\nQuestion {i + 1} of {total_questions}" + Style.RESET_ALL)
         question, num1, num2, operator = generate_question(difficulty)
 
         # Start a countdown timer
-        timer_seconds = 10
-        print(Fore.YELLOW + f"You have {timer_seconds} seconds to answer this question." + Style.RESET_ALL)
-        countdown_timer(timer_seconds)
+        print(Fore.YELLOW + f"You have {max_time} seconds to answer this question." + Style.RESET_ALL)
+        countdown_timer(max_time)
 
         start_time = time.time()
         try:
             answer, correct_answer = ask_question(question, num1, num2, operator)
         except ValueError:
             print(Fore.RED + "Invalid input! Please enter a number." + Style.RESET_ALL)
+            total_score -= 5  # Penalty for invalid input
             continue
-
-        # Check if the answer is correct
-        if abs(answer - correct_answer) < 0.01:  # Allow a small tolerance for floating-point division
-            print(Fore.GREEN + "Correct!" + Style.RESET_ALL)
-            score += 1
-        else:
-            print(Fore.RED + f"Wrong! The correct answer was {correct_answer}" + Style.RESET_ALL)
 
         end_time = time.time()
         time_taken = round(end_time - start_time, 2)
+        correct = abs(answer - correct_answer) < 0.01  # Allow small tolerance for floating-point division
+
+        if correct:
+            print(Fore.GREEN + "Correct!" + Style.RESET_ALL)
+        else:
+            print(Fore.RED + f"Wrong! The correct answer was {correct_answer}" + Style.RESET_ALL)
+
+        question_score = calculate_score(correct, time_taken, max_time)
+        total_score += question_score
+
         print(Fore.MAGENTA + f"Time taken: {time_taken} seconds" + Style.RESET_ALL)
+        print(Fore.CYAN + f"Points for this question: {question_score}" + Style.RESET_ALL)
 
-    print(Fore.CYAN + f"\nQuiz Finished! Your score: {score}/{total_questions}" + Style.RESET_ALL)
+    print(Fore.CYAN + f"\nQuiz Finished! Your total score: {total_score}" + Style.RESET_ALL)
 
-    if score > high_score:
+    if total_score > high_score:
         print(Fore.GREEN + "Congratulations! You beat the high score!" + Style.RESET_ALL)
-        write_high_score(score)
+        write_high_score(total_score)
     else:
         print(Fore.YELLOW + f"Try again to beat the high score of {high_score}!" + Style.RESET_ALL)
 
