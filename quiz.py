@@ -1,6 +1,7 @@
 import random
 import time
 from colorama import Fore, Style
+import os
 
 # Function to generate a random question
 def generate_question(difficulty):
@@ -42,6 +43,21 @@ def countdown_timer(seconds):
         time.sleep(1)
     print("\n")
 
+# Function to read the high score from a file
+def read_high_score():
+    if os.path.exists("highscore.txt"):
+        with open("highscore.txt", "r") as file:
+            try:
+                return int(file.read().strip())
+            except ValueError:
+                return 0
+    return 0
+
+# Function to write the high score to a file
+def write_high_score(score):
+    with open("highscore.txt", "w") as file:
+        file.write(str(score))
+
 # Main function to run the quiz
 def run_quiz():
     from colorama import init
@@ -49,6 +65,9 @@ def run_quiz():
 
     print(Fore.CYAN + "\nWelcome to the Mental Math Quiz!" + Style.RESET_ALL)
     difficulty = input("Choose a difficulty (easy, medium, hard): ").lower()
+
+    high_score = read_high_score()
+    print(Fore.MAGENTA + f"Current High Score: {high_score}" + Style.RESET_ALL)
 
     score = 0
     total_questions = 5
@@ -81,6 +100,12 @@ def run_quiz():
         print(Fore.MAGENTA + f"Time taken: {time_taken} seconds" + Style.RESET_ALL)
 
     print(Fore.CYAN + f"\nQuiz Finished! Your score: {score}/{total_questions}" + Style.RESET_ALL)
+
+    if score > high_score:
+        print(Fore.GREEN + "Congratulations! You beat the high score!" + Style.RESET_ALL)
+        write_high_score(score)
+    else:
+        print(Fore.YELLOW + f"Try again to beat the high score of {high_score}!" + Style.RESET_ALL)
 
 if __name__ == "__main__":
     run_quiz()
